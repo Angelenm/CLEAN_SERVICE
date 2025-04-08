@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tags optimizados para móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4CAF50">
+    <title>Servicios de Limpieza - Gestión Laboral</title>
+    
+    <!-- Preload de recursos críticos -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" as="style" crossorigin="anonymous">
+    
+    <!-- Hojas de estilo -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous">
+    
+    <!-- Configuración PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gestión Laboral">
+    
+    <!-- Favicon para múltiples dispositivos -->
+    <link rel="icon" href="favicon.ico" sizes="32x32">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Preconexión a CDNs -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Pantalla de inicio - Escaneo QR -->
+        <div id="qr-screen" class="screen active">
+            <div class="header">
+                <h1>Registro Laboral</h1>
+                <p class="subtitle">Escanea tu código QR para identificarte</p>
+            </div>
+            
+            <div class="qr-scanner-container">
+                <!-- Video optimizado para móviles -->
+                <div class="video-wrapper">
+                    <video id="qr-video" playsinline webkit-playsinline></video>
+                    <div class="scanner-overlay"></div>
+                </div>
+                
+                <div class="scanner-buttons">
+                    <button id="start-scanner" class="btn primary">
+                        <i class="fas fa-camera"></i> Iniciar Escáner
+                    </button>
+                    <button id="stop-scanner" class="btn secondary" style="display:none;">
+                        <i class="fas fa-stop"></i> Detener
+                    </button>
+                </div>
+            </div>
+            
+            <div class="qr-generator">
+                <h3><i class="fas fa-qrcode"></i> Generar mi código QR</h3>
+                <div class="input-group">
+                    <input type="text" id="qr-employee-id" placeholder="Ingresa tu ID (ej: EMP001)" 
+                           class="form-control" autocapitalize="characters" inputmode="text">
+                    <button id="generate-qr-btn" class="btn primary">
+                        <i class="fas fa-bolt"></i> Generar
+                    </button>
+                </div>
+                
+                <div id="qr-result-container" style="display: none;">
+                    <canvas id="qr-canvas-result" aria-label="Código QR generado"></canvas>
+                    <p class="qr-id-display">ID: <strong id="qr-employee-id-display"></strong></p>
+                    <button id="download-qr-btn" class="btn secondary">
+                        <i class="fas fa-download"></i> Descargar QR
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mensaje para móviles -->
+            <div class="mobile-tips">
+                <p><i class="fas fa-mobile-alt"></i> <strong>Consejo:</strong> Para mejor experiencia, añade esta app a tu pantalla de inicio.</p>
+            </div>
+        </div>
+
+        <!-- Pantalla de información del empleado -->
+        <div id="employee-screen" class="screen">
+            <div class="header">
+                <button id="logout-btn" class="btn icon" aria-label="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+                <h2>Ficha del Empleado</h2>
+            </div>
+            
+            <div class="employee-info">
+                <div class="profile-pic" role="img" aria-label="Foto de perfil">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="info-grid">
+                    <div><strong>Nombre:</strong> <span id="emp-name"></span></div>
+                    <div><strong>Cargo:</strong> <span id="emp-position"></span></div>
+                    <div><strong>Jornada:</strong> <span id="emp-schedule"></span></div>
+                    <div><strong>Turno:</strong> <span id="emp-shift"></span></div>
+                    <div><strong>Ingreso:</strong> <span id="emp-start-date"></span></div>
+                    <div><strong>Área:</strong> <span id="emp-department"></span></div>
+                </div>
+            </div>
+
+            <!-- Pestañas optimizadas para touch -->
+            <div class="tabs" role="tablist">
+                <button class="tab-btn active" data-tab="register" role="tab" aria-selected="true" aria-controls="register-tab">
+                    <i class="fas fa-clock"></i> Registro
+                </button>
+                <button class="tab-btn" data-tab="performance" role="tab" aria-selected="false" aria-controls="performance-tab">
+                    <i class="fas fa-chart-line"></i> Desempeño
+                </button>
+                <button class="tab-btn" data-tab="payments" role="tab" aria-selected="false" aria-controls="payments-tab">
+                    <i class="fas fa-money-bill-wave"></i> Pagos
+                </button>
+            </div>
+
+            <!-- Pestaña de Registro -->
+            <div id="register-tab" class="tab-content active" role="tabpanel">
+                <div class="time-register">
+                    <h3>Registro de Jornada</h3>
+                    <div class="clock-container">
+                        <div id="clock-display" class="clock" aria-live="polite">00:00:00</div>
+                        <div id="date-display" class="date" aria-live="polite">Lunes, 1 de Enero 2023</div>
+                    </div>
+                    
+                    <div class="register-buttons">
+                        <button id="check-in-btn" class="btn primary">
+                            <i class="fas fa-sign-in-alt"></i> Registrar Entrada
+                        </button>
+                        <button id="check-out-btn" class="btn secondary" disabled>
+                            <i class="fas fa-sign-out-alt"></i> Registrar Salida
+                        </button>
+                    </div>
+                    
+                    <div id="register-status" class="status-message" aria-live="polite"></div>
+                    
+                    <div class="work-details" id="work-details-section" style="display:none;">
+                        <h4>Detalles del Trabajo</h4>
+                        <div class="form-group">
+                            <label for="work-type">Tipo de Trabajo:</label>
+                            <select id="work-type" class="form-control">
+                                <option value="general">Limpieza General</option>
+                                <option value="deep">Limpieza Profunda</option>
+                                <option value="disinfection">Desinfección</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assigned-floor">Piso a Cargo:</label>
+                            <input type="text" id="assigned-floor" class="form-control" 
+                                   placeholder="Ej: Piso 3, Área Norte" inputmode="text">
+                        </div>
+                        <div class="form-group">
+                            <label for="materials">Material Asignado:</label>
+                            <select id="materials" class="form-control" multiple size="3">
+                                <option value="broom">Escoba</option>
+                                <option value="mop">Trapeador</option>
+                                <option value="detergent">Detergente</option>
+                                <option value="disinfectant">Desinfectante</option>
+                                <option value="gloves">Guantes</option>
+                                <option value="uniform">Uniforme</option>
+                            </select>
+                        </div>
+                        <button id="save-work-details" class="btn primary">
+                            <i class="fas fa-save"></i> Guardar Detalles
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="today-records">
+                    <h3>Registro de Hoy</h3>
+                    <div class="table-responsive">
+                        <table id="today-records-table" aria-label="Registro de horas trabajadas hoy">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Entrada</th>
+                                    <th scope="col">Salida</th>
+                                    <th scope="col">Horas</th>
+                                    <th scope="col">Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Datos se llenarán con JavaScript -->
+                                <tr>
+                                    <td colspan="4" style="text-align:center;">No hay registros hoy</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña de Desempeño -->
+            <div id="performance-tab" class="tab-content" role="tabpanel" hidden>
+                <h3>Mi Desempeño</h3>
+                
+                <div class="performance-metrics">
+                    <div class="metric-card">
+                        <h4>Asistencia este Mes</h4>
+                        <div class="progress-circle" id="attendance-circle">
+                            <svg viewBox="0 0 36 36" aria-hidden="true">
+                                <path d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#eee" stroke-width="3"/>
+                                <path id="attendance-path" d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none" stroke="#4CAF50" stroke-width="3"
+                                    stroke-dasharray="0, 100"/>
+                                <text x="18" y="20.5" class="percentage">0%</text>
+                            </svg>
+                        </div>
+                        <p>Días trabajados: <span id="days-worked">0</span>/<span id="total-days">0</span></p>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>Bono de Eficiencia</h4>
+                        <div class="bonus-indicator" id="bonus-indicator">
+                            <div class="bonus-light" id="bonus-light" aria-hidden="true"></div>
+                            <span id="bonus-status">No aplica</span>
+                        </div>
+                        <p id="bonus-criteria">Cumple con los criterios de eficiencia</p>
+                    </div>
+                </div>
+                
+                <div class="deductions-section">
+                    <h4>Descuentos y Bonificaciones</h4>
+                    <div class="chart-container">
+                        <canvas id="deductions-chart" aria-label="Gráfico de deducciones y bonificaciones"></canvas>
+                    </div>
+                    <div class="deductions-details">
+                        <div>
+                            <span class="dot" style="background-color: #FF6384;"></span>
+                            <span>Descuento por faltas: <span id="deduction-amount">$0</span></span>
+                        </div>
+                        <div>
+                            <span class="dot" style="background-color: #36A2EB;"></span>
+                            <span>Bono de eficiencia: <span id="bonus-amount">$0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña de Pagos -->
+            <div id="payments-tab" class="tab-content" role="tabpanel" hidden>
+                <h3>Mis Pagos</h3>
+                
+                <div class="payment-period-selector">
+                    <label for="payment-period">Período de Pago:</label>
+                    <select id="payment-period" class="form-control">
+                        <option value="current">Actual</option>
+                        <option value="last">Anterior</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                    <div id="custom-period" style="display:none;">
+                        <div class="date-range">
+                            <input type="date" id="start-date" class="form-control" aria-label="Fecha de inicio">
+                            <span>a</span>
+                            <input type="date" id="end-date" class="form-control" aria-label="Fecha de fin">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-summary">
+                    <div class="summary-card">
+                        <h4>Resumen de Pago</h4>
+                        <div class="summary-item">
+                            <span>Salario Base:</span>
+                            <span id="base-salary">$0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Horas Extras:</span>
+                            <span id="overtime-pay">$0.00</span>
+                        </div>
+                        <div class="summary-item positive">
+                            <span>Bonificaciones:</span>
+                            <span id="bonuses-pay">$0.00</span>
+                        </div>
+                        <div class="summary-item negative">
+                            <span>Descuentos:</span>
+                            <span id="deductions-pay">$0.00</span>
+                        </div>
+                        <div class="summary-item total">
+                            <span>Total a Pagar:</span>
+                            <span id="total-pay">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-details">
+                    <h4>Detalles de Deducciones</h4>
+                    <div class="table-responsive">
+                        <table id="deductions-table" aria-label="Detalles de deducciones">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Concepto</th>
+                                    <th scope="col">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Seguro Social (SSO)</td>
+                                    <td id="sso-amount">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Banavih</td>
+                                    <td id="banavih-amount">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>ISLR</td>
+                                    <td id="islr-amount">$0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <button id="generate-pdf" class="btn primary">
+                    <i class="fas fa-file-pdf"></i> Generar Recibo PDF
+                </button>
+                
+                <div class="mobile-pdf-tip">
+                    <p><i class="fas fa-info-circle"></i> En móviles, el PDF se descargará automáticamente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mostrar mensajes -->
+    <div id="message-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+        <div class="modal-content">
+            <span class="close-modal" aria-label="Cerrar modal">&times;</span>
+            <h3 id="modal-title">Título</h3>
+            <p id="modal-message">Mensaje aquí...</p>
+            <button id="modal-confirm" class="btn primary">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Scripts optimizados para móviles -->
+    <!-- Carga diferida de scripts no críticos -->
+    <script>
+        // Función para cargar scripts dinámicamente
+        function loadScript(src, async = true, defer = true) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = async;
+                script.defer = defer;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.body.appendChild(script);
+            });
+        }
+        
+        // Precarga de scripts importantes
+        const criticalScripts = [
+            'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
+            'script.js'
+        ];
+        
+        // Cargar scripts críticos primero
+        window.addEventListener('DOMContentLoaded', () => {
+            loadScript(criticalScripts[0])
+                .then(() => loadScript(criticalScripts[1]))
+                .catch(error => console.error('Error cargando scripts:', error));
+            
+            // Cargar el resto de scripts después
+            const lazyScripts = [
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js',
+                'https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js'
+            ];
+            
+            // Usar requestIdleCallback para cargar scripts no críticos
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(() => {
+                    lazyScripts.forEach(src => loadScript(src));
+                });
+            } else {
+                // Fallback para navegadores que no soportan requestIdleCallback
+                window.addEventListener('load', () => {
+                    lazyScripts.forEach(src => loadScript(src));
+                });
+            }
+        });
+    </script>
+</body>
+</html>
